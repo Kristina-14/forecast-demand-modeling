@@ -92,6 +92,10 @@ nav ul li a {
     cursor: pointer;
 }
 
+.filters ul li:hover{
+    background-color: #98A5E3;
+    color: black;
+}
 .filters ul .upload-data-btn {
     background-color: #212227;
     color: white;
