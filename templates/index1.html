@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Processor</title>
+    <style>
+        body {
+            background-color: #0a0a47;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+        }
+        .button {
+            background-color: #fff;
+            border: none;
+            color: #0a0a47;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+        .input-field {
+            margin: 20px 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Choose your file</h1>
+    <form id="upload-form">
+        <input type="file" id="file-input" class="input-field"><br>
+        <label for="target-input">Enter Target Variable</label><br>
+        <input type="text" id="target-input" class="input-field"><br>
+        <button type="button" class="button" onclick="processData()">Process and Clean</button>
+    </form>
+    <button id="download-train" class="button hidden" onclick="downloadFile('train')">Download Train Data</button>
+    <button id="download-test" class="button hidden" onclick="downloadFile('test')">Download Test Data</button>
+    <button id="train-arima" class="button hidden" onclick="trainARIMA()">Train ARIMA Model</button>
+    
+    <!-- Buttons to view plots -->
+    <h2>View Plots</h2>
+    <button class="button" onclick="viewDash()">View Interactive Plots</button>
+
+    <h2>Model Evaluation Metrics</h2>
+    <p id="mae">MAE: </p>
+    <p id="rmse">RMSE: </p>
+    <p id="mape">MAPE: </p>
+    <p id="nrmse">NRMSE: </p>
+
+    <script>
+        function processData() {
+            const fileInput = document.getElementById('file-input');
+            const targetInput = document.getElementById('target-input');
+            const formData = new FormData();
+
+            if (fileInput.files.length === 0) {
+                alert('Please select a file.');
+                return;
+            }
+            if (targetInput.value === '') {
+                alert('Please enter the target variable.');
+                return;
+            }
+
+            formData.append('file', fileInput.files[0]);
+            formData.append('target_column', targetInput.value);
+
+            fetch('/process', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    document.getElementById('download-train').classList.remove('hidden');
+                    document.getElementById('download-test').classList.remove('hidden');
+                    document.getElementById('train-arima').classList.remove('hidden');
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+
+        function downloadFile(type) {
+            const url = type === 'train' ? '/download/cleaned_train_data.csv' : '/download/cleaned_test_data.csv';
+            window.location.href = url;
+        }
+
+        function trainARIMA() {
+            fetch('/train-arima', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+        document.getElementById('mae').innerText = `MAE: ${data.mae}`;
+        document.getElementById('rmse').innerText = `RMSE: ${data.rmse}`;
+        document.getElementById('mape').innerText = `MAPE: ${data.mape}%`;
+        document.getElementById('nrmse').innerText = `NRMSE: ${data.nrmse}`;
+        alert(`ARIMA Model Trained and Forecasted Successfully.\nMAE: ${data.mae}\nRMSE: ${data.rmse}\nMAPE: ${data.mape}%\nNRMSE: ${data.nrmse}`);
+    }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+
+        function viewDash() {
+            window.location.href = '/dash';
+        }
+    </script>
+</body>
+</html>                                                                           
